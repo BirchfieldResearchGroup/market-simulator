@@ -20,7 +20,9 @@ npm run dev                      # app + Worker + Durable Objects on one local s
 
 ## Deploy
 
-Cloudflare Workers Builds deploys `main` (build command `npm run build`, deploy command `npx wrangler deploy`). Set the instructor password once per account:
+GitHub Actions deploys `main` after all tests pass, using the repository secrets `CLOUDFLARE_API_TOKEN` (account-owned token with Workers edit access) and `CLOUDFLARE_ACCOUNT_ID`.
+
+Set the instructor password once:
 
 ```bash
 npx wrangler secret put ADMIN_PASSWORD
