@@ -8,25 +8,22 @@ The goal: maximize your total money across all periods.
 
 ## Game Flow
 
-1. **Admin creates a game** — configures payment method, generator preset, load profile, number of periods, and other settings.
-2. **Players join** — students enter their name and UIN to join the market lobby.
-3. **Admin starts the game** — generators are distributed and the first period begins.
+1. **Instructor creates a market** — names it and configures payment method, generator preset, load profile, number of periods, and other settings.
+2. **Players join** — students sign in with their name and UIN and join from the market list (or a join link for unlisted markets).
+3. **Instructor starts the game** — generators are distributed and period 1 opens.
 4. **Each period:**
-   - Students see the current demand (load in MW) and set offer prices for each of their generators.
-   - When the period advances (manually or by auto-timer), the market clears.
-   - Results show each generator's dispatch, revenue, costs, and profit.
-5. **Game ends** after all periods are played. Final rankings are displayed.
-
-> **Period timing note:** Market clearing for period N happens when the game advances _to_ period N+1. The first advance (period 0 to 1) opens play but does not clear. Players submit offers during the current period; those offers are used when the period advances.
+   - Students see the forecast load (MW) for the period and set offer prices for each of their generators.
+   - When the period advances (manually or by auto-timer), the market clears using the current offers.
+   - Results show revenue, costs, and profit for the period.
+5. **Game ends** when the final period clears. Final rankings are displayed.
 
 ### Game States
 
-| State         | Description                                                    |
-| ------------- | -------------------------------------------------------------- |
-| **Forming**   | Lobby is open; players can join.                               |
-| **Full**      | Max players reached; no more can join (admin can still start). |
-| **Running**   | Periods are being played.                                      |
-| **Completed** | All periods finished; results are final.                       |
+| State         | Description                                               |
+| ------------- | --------------------------------------------------------- |
+| **Forming**   | Lobby is open; players can join until the maximum is met. |
+| **Running**   | Periods are being played.                                 |
+| **Completed** | All periods finished; results are final.                  |
 
 ## Market Clearing (Merit Order Dispatch)
 
@@ -79,12 +76,12 @@ This models pay-as-bid auctions. Key strategic implications:
 
 ### Comparison
 
-| Aspect                     | LAO (Uniform)                  | PAO (Discriminatory)                               |
-| -------------------------- | ------------------------------ | -------------------------------------------------- |
-| Payment basis              | Clearing price (marginal cost) | Each generator's own offer                         |
-| Low-cost generator surplus | Yes — paid above their offer   | No — paid exactly their offer                      |
-| Optimal strategy           | Offer near true cost           | Offer above cost, estimate clearing price          |
-| Real-world analogue        | ERCOT, PJM, most U.S. ISOs     | UK electricity market (pre-NETA), some gas markets |
+| Aspect                     | LAO (Uniform)                  | PAO (Discriminatory)                      |
+| -------------------------- | ------------------------------ | ----------------------------------------- |
+| Payment basis              | Clearing price (marginal cost) | Each generator's own offer                |
+| Low-cost generator surplus | Yes — paid above their offer   | No — paid exactly their offer             |
+| Optimal strategy           | Offer near true cost           | Offer above cost, estimate clearing price |
+| Real-world analogue        | ERCOT, PJM, most U.S. ISOs     | UK Balancing Mechanism, some gas markets  |
 
 ## Financial Calculations
 
@@ -170,32 +167,31 @@ The profile repeats on a 24-period cycle: `profile[(periodNumber - 1) % 24]`. A 
 
 ### Load Jitter
 
-When **load jitter** is enabled (1–30%), each period's actual demand is randomly varied from the profile value by up to ±X%. The demand forecast shown to players before clearing uses the base profile value (no jitter), so there is a surprise element at clearing time. This reduces the advantage of memorizing the load profile.
+When **load jitter** is enabled (1–30%), each period's actual demand is randomly varied from the profile value by up to ±X%. The forecast shown to players uses the base profile value (no jitter), so there is a surprise element at clearing time. This reduces the advantage of memorizing the load profile.
 
-## Admin Features
+## Instructor Features
 
-- **Auto-advance timer** — periods advance automatically on a configurable countdown (default 180 seconds). Can be toggled on/off mid-game.
-- **Manual advance** — admin can advance the period at any time.
-- **Kick players** — remove a player during the lobby phase.
-- **Reward/penalize** — adjust a player's money during a running or completed game.
-- **Market visibility** — set to public (appears in market list) or unlisted (join by name only).
-- **Join policy** — lock or unlock the lobby to prevent/allow new players.
-- **CSV export** — download full game data (periods, players, generators) as CSV files.
-- **Market settings** — all game parameters (payment method, generator preset, demand profile, offer cap, starting money, scarcity price, load jitter, etc.) are editable via the settings modal while the game is in the forming/full state. Once the game starts, settings become read-only.
-- **Storage management** — view, probe, and destroy Durable Object storage for all markets.
+- **Auto-advance timer** — periods advance automatically on a configurable countdown (default 180 seconds). Can be toggled on/off mid-game; re-enabling restarts the full countdown.
+- **Manual advance** — clear the current period at any time.
+- **Remove players** — during the lobby phase.
+- **Adjust balances** — add or subtract money during a running or completed game.
+- **Visibility** — public markets appear in the market list; unlisted markets are joined with a copied link.
+- **Settings** — every game parameter is editable in the lobby and locked once the game starts.
+- **CSV export** — download the period-by-period data for all players and generators.
+- **Delete market** — removes the market and its data. Markets are also deleted automatically 48 hours after their last activity.
 
 ## Player Features
 
-- **Real-time offer submission** — set offer prices for each generator at any time during a period.
-- **Period results** — view revenue, costs, and profit per period.
-- **Profit chart** — visual chart of cumulative money over time.
-- **Leaderboard rank** — see your position relative to other players (other players' exact money is hidden).
-- **Auto-reconnect** — if disconnected, the client automatically reconnects with exponential backoff.
+- **Offer submission** — set and update offers until the period clears.
+- **Period results** — clearing price, load, and your profit for every period.
+- **Results chart** — revenue, profit, load, and clearing price per period.
+- **Rank** — your position among all players; other players' balances stay hidden.
+- **Auto-reconnect** — a dropped connection reconnects automatically, and a page refresh resumes the session.
 
 ### Information Visibility
 
-Players can see their own money, period results, and leaderboard rank. Other players' exact money is hidden (shown as $0). Players cannot see other players' offers or dispatch details.
+Players see only their own balance, generators, and period results. Other players' balances, offers, and dispatch are hidden.
 
 ### Offer Validation
 
-Offers are silently clamped to `[0, max_offer_price]`. Non-finite values (NaN, Infinity) are rejected and the previous offer is retained.
+Offers are clamped to `[0, offer cap]`. Malformed submissions and offers for a period that has already cleared are rejected.

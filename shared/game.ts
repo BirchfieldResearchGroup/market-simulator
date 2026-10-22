@@ -1,30 +1,14 @@
-export type Visibility = 'public' | 'unlisted';
-export type GenPreset = 'standard' | 'simple' | 'competitive';
-export type LoadProfile = 'realistic' | 'flat' | 'peak' | 'volatile';
-export type PaymentMethod = 'last_accepted_offer' | 'pay_as_offered';
+import { DEFAULT_OPTIONS, type Visibility } from './config';
+import type { GameOptions } from './schema';
 
-export interface GameOptions {
-	max_participants: number;
-	num_periods: number;
-	/** Seconds, not milliseconds. */
-	auto_advance_time: number;
-	payment_method: PaymentMethod;
-	max_offer_price: number;
-	starting_money: number;
-	gen_preset: GenPreset;
-	load_profile: LoadProfile;
-	scarcity_price: number;
-	/** Random load variation as integer percentage (0–30). */
-	load_jitter: number;
-}
+export type Role = 'admin' | 'participant';
+export type Phase = 'uninitialized' | 'forming' | 'running' | 'completed';
 
 export interface Generator {
 	id: string;
 	owner: string;
 	capacity: number;
-	/** True production cost in $/MWh. Immutable per-game. */
 	cost: number;
-	/** Current bid price in $/MWh. Set by player. Initialized to `cost`. */
 	offer: number;
 }
 
@@ -34,65 +18,75 @@ export interface Player {
 	last_offer_time: number;
 }
 
+export interface PlayerResult {
+	revenue: number;
+	costs: number;
+	profit: number;
+	money: number;
+}
+
 export interface Period {
 	number: number;
 	load: number;
-	marginal_cost: number | null;
-	players: Record<string, {
-		revenue: number | null;
-		costs: number | null;
-		profit: number | null;
-		money: number | null;
-	}>;
-	/** Present in storage and CSV export; stripped before client broadcasts. */
-	gens?: Record<string, {
-		offer: number | null;
-		mw: number | null;
-	}>;
-}
-
-export interface MarketListItem {
-	name: string;
-	state: GameState['state'] | 'connecting';
-	visibility: Visibility;
-	playerCount: number;
-	maxPlayers: number;
-	updatedAt: number;
-	isMember?: boolean;
+	marginal_cost: number;
+	players: Partial<Record<string, PlayerResult>>;
+	gens: Record<string, { offer: number; mw: number }>;
 }
 
 export interface GameState {
-	state: 'uninitialized' | 'forming' | 'running' | 'completed';
+	state: Phase;
 	visibility: Visibility;
-	options?: GameOptions;
+	options: GameOptions;
 	players: Record<string, Player>;
 	gens: Record<string, Generator>;
-	periods: Period[];
 	period: number;
 	auto_advance: boolean;
 	advance_time: number;
 	last_advance_time: number;
 }
 
-/** Wire format for WS broadcasts — extends persisted state with runtime-only fields. */
-export interface GameBroadcast extends GameState {
-	connectedClients?: string[];
+export interface GameView extends GameState {
+	load: number | null;
+	now: number;
 	rank?: number;
-	currentLoad?: number | null;
-	nextLoad?: number | null;
-	_initial?: boolean;
+	clients?: string[];
 }
 
-export function createDefaultGameState(): GameState {
+export interface MarketListItem {
+	name: string;
+	state: Phase;
+	visibility: Visibility;
+	playerCount: number;
+	maxPlayers: number;
+	isMember: boolean;
+}
+
+export type ServerMessage =
+	| { type: 'state'; state: GameView; periods?: Period[]; cleared?: Period }
+	| { type: 'clients'; clients: string[] }
+	| { type: 'error'; message: string }
+	| { type: 'closed'; reason: string };
+
+export const CLOSE_CODE = 4000;
+
+export function emptyGame(): GameState {
 	return {
 		state: 'uninitialized',
 		visibility: 'public',
+		options: { ...DEFAULT_OPTIONS },
 		players: {},
 		gens: {},
-		periods: [],
 		period: 0,
 		auto_advance: false,
 		advance_time: 0,
 		last_advance_time: 0
 	};
+}
+
+export function standings(players: Record<string, Player>): [string, Player][] {
+	return Object.entries(players).sort(([a, x], [b, y]) => y.money - x.money || a.localeCompare(b));
+}
+
+export function hasSubmitted(player: Player | undefined, game: GameState): boolean {
+	return !!player && player.last_offer_time > game.last_advance_time;
 }

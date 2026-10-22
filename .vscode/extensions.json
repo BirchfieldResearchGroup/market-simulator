@@ -1,9 +1,8 @@
 {
 	"recommendations": [
 		"svelte.svelte-vscode",
-		"ms-playwright.playwright",
 		"esbenp.prettier-vscode",
 		"dbaeumer.vscode-eslint",
-		"spencerwmiles.vscode-task-buttons"
+		"ms-playwright.playwright"
 	]
 }

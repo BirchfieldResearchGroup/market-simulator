@@ -1,38 +1,37 @@
 # Power Market Simulator
 
-Electricity market simulation for classroom use. Students compete as power plant owners, submitting price offers each period. See [docs/GAME_GUIDE.md](docs/GAME_GUIDE.md) for game rules.
+Classroom electricity market. Students own generator portfolios and submit price offers each period; the market clears by merit order. Rules and economics are in [docs/GAME_GUIDE.md](docs/GAME_GUIDE.md).
 
-## Setup
+## Develop
 
 ```bash
 npm install
+cp .dev.vars.example .dev.vars   # set ADMIN_PASSWORD
+npm run dev                      # app + Worker + Durable Objects on one local server
 ```
 
-Create `.dev.vars` in the project root:
+| Command            | Purpose                                        |
+| ------------------ | ---------------------------------------------- |
+| `npm run check`    | Type-check the app and the Worker              |
+| `npm run lint`     | ESLint and Prettier                            |
+| `npm run format`   | Apply Prettier                                 |
+| `npm test`         | Game engine unit tests                         |
+| `npm run test:e2e` | Browser tests against a local production build |
 
-```
-ADMIN_PASSWORD=your-password-here
-```
+## Deploy
 
-## Run Locally
-
-```bash
-npm run dev             # terminal 1
-npm run dev:worker      # terminal 2
-```
-
-## Publish to the Web
-
-Push to `main` deploys automatically via [Cloudflare Git integration](https://developers.cloudflare.com/workers/ci-cd/builds/).
-
-Set your production admin password once:
+Cloudflare Workers Builds deploys `main` (build command `npm run build`, deploy command `npx wrangler deploy`). Set the instructor password once per account:
 
 ```bash
 npx wrangler secret put ADMIN_PASSWORD
 ```
 
-### Fork Quickstart
+## Layout
 
-1. Fork repo, [create a Cloudflare Worker](https://dash.cloudflare.com/) linked to your fork
-2. Set build command to `npm run build`
-3. Run `npx wrangler secret put ADMIN_PASSWORD`
+| Path      | Contents                                                                                                   |
+| --------- | ---------------------------------------------------------------------------------------------------------- |
+| `shared/` | Types, presets, option limits and message schemas used by both sides                                       |
+| `worker/` | API router, `MarketRoom` (one Durable Object per market), `MarketRegistry` (market list), pure game engine |
+| `src/`    | Svelte single-page app: `admin/`, `player/`, shared `components/`, `lib/` state and API                    |
+
+Each market's Durable Object keeps one alarm: the next auto-advance while a game runs, otherwise deletion after 48 hours without activity.

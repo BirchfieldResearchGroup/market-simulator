@@ -1,61 +1,28 @@
-import { test, expect } from './fixtures.js';
+import { expect, test } from './fixtures';
 
-test.describe('Connection Resilience', () => {
-	test('player state survives page refresh', async ({ adminPage, playerPage }) => {
-		const { marketName } = adminPage;
+test('player session survives a page refresh', async ({ join }) => {
+	const player = await join('Refresher');
+	await player.reload();
+	await expect(player.getByText("You're in!")).toBeVisible();
+});
 
-		// Player joins
-		const player = await playerPage(marketName, 'Refresher');
+test('admin session survives a page refresh', async ({ market }) => {
+	await market.admin.reload();
+	await expect(market.admin.getByRole('heading', { name: market.name })).toBeVisible();
+});
 
-		// Verify player is in game
-		await expect(player.getByText('Refresher', { exact: true }).first()).toBeVisible({
-			timeout: 10_000
-		});
+test('reconnects after the network drops', async ({ join }) => {
+	const player = await join('Reconnector');
+	await player.context().setOffline(true);
+	await player.waitForTimeout(2000);
+	await player.context().setOffline(false);
+	await expect(player.getByText("You're in!")).toBeVisible({ timeout: 30_000 });
+});
 
-		// Refresh the page
-		await player.reload();
-
-		// Player should still see the game (auto-reconnect via session storage)
-		await expect(player.getByText('Refresher', { exact: true }).first()).toBeVisible({
-			timeout: 15_000
-		});
-	});
-
-	test('admin state survives page refresh', async ({ adminPage }) => {
-		const { page: admin } = adminPage;
-
-		// Verify admin dashboard is loaded
-		await expect(admin.getByRole('button', { name: 'New Market' })).toBeVisible();
-
-		// Refresh the page
-		await admin.reload();
-
-		// Admin session should survive — still on admin dashboard, not login page
-		await expect(admin.getByRole('button', { name: 'New Market' })).toBeVisible({
-			timeout: 20_000
-		});
-	});
-
-	test('WebSocket reconnects after brief disconnect', async ({ adminPage, playerPage }) => {
-		const { page: admin, marketName } = adminPage;
-
-		const player = await playerPage(marketName, 'Reconnector');
-		await expect(admin.getByText('Reconnector', { exact: true }).first()).toBeVisible({
-			timeout: 10_000
-		});
-
-		// Simulate network disconnect by going offline
-		await player.context().setOffline(true);
-
-		// Wait briefly for disconnect to register
-		await player.waitForTimeout(2000);
-
-		// Go back online
-		await player.context().setOffline(false);
-
-		// Player should reconnect and see their state restored
-		await expect(player.getByText('Reconnector', { exact: true }).first()).toBeVisible({
-			timeout: 20_000
-		});
-	});
+test('a second tab replaces the first', async ({ join }) => {
+	const first = await join('Doubler', 'D1');
+	const second = await first.context().newPage();
+	await second.goto('/');
+	await expect(second.getByText("You're in!")).toBeVisible();
+	await expect(first.getByText('Connected from another tab.')).toBeVisible();
 });

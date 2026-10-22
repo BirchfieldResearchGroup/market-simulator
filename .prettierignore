@@ -1,5 +1,5 @@
-build/
-.svelte-kit/
-dist-worker/
-node_modules/
-.wrangler/
+dist
+.wrangler
+package-lock.json
+playwright-report
+test-results
