@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Power Market Simulator models a simplified electricity wholesale market. Each student acts as a power plant owner with a portfolio of generators. Every period, students set offer prices for their generators. The market then clears using **merit-order dispatch** — the cheapest generators are dispatched first to meet demand. Profits depend on which generators are dispatched and the selected **payment method**.
+The Energy Market Simulator models a simplified electricity wholesale market. Each student acts as a power plant owner with a portfolio of generators. Every period, students set offer prices for their generators. The market then clears using **merit-order dispatch** — the cheapest generators are dispatched first to meet demand. Profits depend on which generators are dispatched and the selected **payment method**.
 
 The goal: maximize your total money across all periods.
 

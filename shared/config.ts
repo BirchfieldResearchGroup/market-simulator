@@ -1,3 +1,5 @@
+import type { GameOptions } from './schema';
+
 export const VISIBILITIES = ['public', 'unlisted'] as const;
 export type Visibility = (typeof VISIBILITIES)[number];
 
@@ -75,10 +77,6 @@ export const LOAD_PROFILES = {
 	}
 } as const;
 
-export type PaymentMethod = keyof typeof PAYMENT_METHODS;
-export type GenPreset = keyof typeof GEN_PRESETS;
-export type LoadProfile = keyof typeof LOAD_PROFILES;
-
 export const NUMBER_OPTIONS = {
 	max_participants: { label: 'Max players', min: 2, max: 99 },
 	num_periods: { label: 'Periods', min: 2, max: 99 },
@@ -101,7 +99,7 @@ export const NUMBER_OPTIONS = {
 
 export type NumberOption = keyof typeof NUMBER_OPTIONS;
 
-export const DEFAULT_OPTIONS = {
+export const DEFAULT_OPTIONS: GameOptions = {
 	max_participants: 6,
 	num_periods: 24,
 	auto_advance_time: 180,
@@ -109,7 +107,7 @@ export const DEFAULT_OPTIONS = {
 	starting_money: 0,
 	scarcity_price: 0,
 	load_jitter: 0,
-	payment_method: 'last_accepted_offer' as PaymentMethod,
-	gen_preset: 'standard' as GenPreset,
-	load_profile: 'realistic' as LoadProfile
+	payment_method: 'last_accepted_offer',
+	gen_preset: 'standard',
+	load_profile: 'realistic'
 };

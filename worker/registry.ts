@@ -2,7 +2,7 @@ import { DurableObject } from 'cloudflare:workers';
 import type { MarketListItem } from '../shared/game';
 import type { Env } from './env';
 
-export interface Listing extends Omit<MarketListItem, 'isMember'> {
+interface Listing extends Omit<MarketListItem, 'isMember'> {
 	playerUins: string[];
 }
 

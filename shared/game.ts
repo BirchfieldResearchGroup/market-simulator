@@ -18,7 +18,7 @@ export interface Player {
 	last_offer_time: number;
 }
 
-export interface PlayerResult {
+interface PlayerResult {
 	revenue: number;
 	costs: number;
 	profit: number;

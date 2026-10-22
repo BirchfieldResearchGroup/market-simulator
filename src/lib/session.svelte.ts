@@ -3,8 +3,7 @@ import type { ClientMessage } from '../../shared/schema';
 import { now } from './clock';
 import { game } from './game.svelte';
 
-export type Identity =
-	{ role: 'admin'; key: string } | { role: 'participant'; name: string; uin: string };
+type Identity = { role: 'admin'; key: string } | { role: 'participant'; name: string; uin: string };
 
 type Status = 'idle' | 'connecting' | 'open' | 'reconnecting';
 

@@ -1,4 +1,4 @@
-# Power Market Simulator
+# Energy Market Simulator
 
 Classroom electricity market. Students own generator portfolios and submit price offers each period; the market clears by merit order. Rules and economics are in [docs/GAME_GUIDE.md](docs/GAME_GUIDE.md).
 
